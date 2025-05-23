@@ -6,7 +6,7 @@
     body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
     #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
     #input, #password, select { width: 80%; padding: 10px; margin-bottom: 10px; }
-    #send, #login { width: 18%; padding: 10px; }
+    #send, #login, #clearAll { width: 18%; padding: 10px; }
     .me { color: blue; text-align: right; }
     .other { color: green; text-align: left; }
     .message { position: relative; padding-right: 30px; }
@@ -22,12 +22,10 @@
       <option value="">انتخاب ماه</option>
       <option value="دی">دی</option>
       <option value="بهمن">بهمن</option>
-      <!-- ماه‌های دیگر نیز قابل اضافه شدن هستند -->
     </select><br>
     <label>روز تولد:</label><br>
     <select id="day">
       <option value="">انتخاب روز</option>
-      <!-- پر می‌شه با جاوااسکریپت -->
     </select><br>
     <input type="password" id="password" placeholder="رمز (فقط برای محمد)" style="display:none;">
     <button id="login">ورود</button>
@@ -35,6 +33,7 @@
     <div id="messages"></div>
     <input type="text" id="input" placeholder="Type a message...">
     <button id="send">Send</button>
+    <button id="clearAll" style="display:none;">پاک کردن تاریخچه</button>
   </div>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDA5KmnIZ9CyIZ0e50sRg0kMk8euVk-xuo",
@@ -60,10 +59,10 @@
     const chatArea = document.getElementById("chatArea");
     const month = document.getElementById("month");
     const day = document.getElementById("day");
+    const clearAll = document.getElementById("clearAll");
 
     let username = "";
 
-    // پر کردن لیست روزها با توجه به ماه انتخابی
     month.onchange = () => {
       const selectedMonth = month.value;
       const dayOptions = day;
@@ -96,7 +95,8 @@
           return;
         }
         username = "محمد";
-      } else if (selectedMonth === "دی" && selectedDay === 13) {
+        clearAll.style.display = "inline-block";
+      } else if (selectedMonth === "دی" && selectedDay === 16) {
         username = "الهام";
       } else {
         alert("تاریخ تولد نادرست است.");
@@ -116,13 +116,19 @@
       }
     };
 
+    clearAll.onclick = () => {
+      if (confirm("آیا مطمئن هستید که می‌خواهید همه پیام‌ها را پاک کنید؟")) {
+        messagesRef.remove();
+        messagesDiv.innerHTML = "";
+      }
+    };
+
     messagesRef.on("child_added", snapshot => {
       const msg = snapshot.val();
       const div = document.createElement("div");
       div.className = (msg.user === username) ? "me message" : "other message";
       div.textContent = msg.user + ": " + msg.text;
 
-      // دکمه حذف برای محمد
       if (username === "محمد" && msg.user === username) {
         const del = document.createElement("span");
         del.textContent = " ✖";
