@@ -1,25 +1,28 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
   <meta charset="UTF-8">
   <title>Simple Chat</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
     #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
-    #input { width: 80%; padding: 10px; }
-    #send { width: 18%; padding: 10px; }
+    #input, #birthdate, #password { width: 80%; padding: 10px; margin-bottom: 10px; }
+    #send, #login { width: 18%; padding: 10px; }
+    .me { color: blue; text-align: right; }
+    .other { color: green; text-align: left; }
   </style>
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
-  <h2>Chat with your friend</h2>
-  <div id="messages"></div>
-  <input type="text" id="input" placeholder="Type a message...">
-  <button id="send">Send</button>
-
-  <script>
+  <h2>Chat with your friend</h2>  <div id="loginArea">
+    <input type="text" id="birthdate" placeholder="تاریخ تولد (مثلاً ۷ دی)">
+    <input type="password" id="password" placeholder="رمز (فقط برای محمد)" style="display:none;">
+    <button id="login">ورود</button>
+  </div>  <div id="chatArea" style="display:none;">
+    <div id="messages"></div>
+    <input type="text" id="input" placeholder="Type a message...">
+    <button id="send">Send</button>
+  </div>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDA5KmnIZ9CyIZ0e50sRg0kMk8euVk-xuo",
       authDomain: "chat-74b30.firebaseapp.com",
@@ -38,22 +41,56 @@
     const messagesDiv = document.getElementById("messages");
     const input = document.getElementById("input");
     const send = document.getElementById("send");
+    const birthdate = document.getElementById("birthdate");
+    const password = document.getElementById("password");
+    const login = document.getElementById("login");
+    const loginArea = document.getElementById("loginArea");
+    const chatArea = document.getElementById("chatArea");
+
+    let username = "";
+
+    login.onclick = () => {
+      const birth = birthdate.value.trim();
+      if (birth === "۷ دی") {
+        if (password.value !== "mohamad200") {
+          alert("رمز اشتباه است.");
+          return;
+        }
+        username = "محمد";
+      } else if (birth === "۱۶ دی") {
+        username = "الهام";
+      } else {
+        alert("تاریخ تولد نادرست است.");
+        return;
+      }
+
+      loginArea.style.display = "none";
+      chatArea.style.display = "block";
+    };
+
+    birthdate.oninput = () => {
+      if (birthdate.value.trim() === "۷ دی") {
+        password.style.display = "block";
+      } else {
+        password.style.display = "none";
+      }
+    };
 
     send.onclick = () => {
       const text = input.value.trim();
       if (text) {
-        messagesRef.push({ text });
+        messagesRef.push({ user: username, text });
         input.value = "";
       }
     };
 
     messagesRef.on("child_added", snapshot => {
-      const msg = snapshot.val().text;
+      const msg = snapshot.val();
       const div = document.createElement("div");
-      div.textContent = msg;
+      div.textContent = msg.user + ": " + msg.text;
+      div.className = (msg.user === username) ? "me" : "other";
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
-  </script>
-</body>
+  </script></body>
 </html>
