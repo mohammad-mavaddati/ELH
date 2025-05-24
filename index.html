@@ -3,63 +3,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>چت خصوصی محمد و الهام</title>
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; background-color: #f5f7fa; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    #container { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: flex; flex-direction: column; }
-    header { background: #4a90e2; color: #fff; text-align: center; padding: 15px; font-size: 1.2rem; }
-    #auth, #chat-ui { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-    label { margin-bottom: 10px; font-size: 0.95rem; }
-    select, input[type="password"], input[type="text"] { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
-    button { background: #4a90e2; color: #fff; border: none; padding: 10px; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 15px; }
-    button:disabled { background: #a0c4e8; cursor: not-allowed; }
-    #chat { flex: 1; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; overflow-y: auto; margin-bottom: 10px; }
-    .msg { margin: 8px 0; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-wrap: break-word; position: relative; }
-    .from-me { background: #e1ffc7; margin-left: auto; }
-    .from-other { background: #d0e7ff; margin-right: auto; }
-    .del-btn { position: absolute; top: 4px; font-size: 0.75rem; background: transparent; border: none; color: #888; cursor: pointer; right: 4px; }
-    #controls { display: flex; gap: 10px; }
-    #controls input { flex: 1; }
-    #last-seen { font-size: 0.8rem; color: #666; margin-bottom: 8px; text-align: center; }
-  </style>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div id="container">
-    <header>چت خصوصی محمد و الهام</header>
-    <div id="auth">
-      <label for="birth-month">ماه تولد:</label>
-      <select id="birth-month"><option value="">-- انتخاب ماه --</option></select>
-      <label for="birth-day">روز تولد:</label>
-      <select id="birth-day" disabled><option value="">-- انتخاب روز --</option></select>
-      <div id="password-container" style="display:none; margin-top:10px;"><label for="password">رمز عبور:</label><input type="password" id="password" placeholder="رمز خود را وارد کنید"></div>
-      <button id="login-btn" disabled>ورود</button>
+<body class="bg-gray-100 flex items-center justify-center h-screen p-4">
+  <div id="container" class="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
+    <div class="bg-blue-600 text-white text-center py-4 text-xl font-semibold">چت خصوصی محمد و الهام</div>
+    <div id="auth" class="p-6 space-y-4">
+      <div>
+        <label class="block text-gray-700">ماه تولد:</label>
+        <select id="birth-month" class="mt-1 block w-full border border-gray-300 rounded-lg p-2">
+          <option value="">-- انتخاب ماه --</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700">روز تولد:</label>
+        <select id="birth-day" disabled class="mt-1 block w-full border border-gray-300 rounded-lg p-2">
+          <option value="">-- انتخاب روز --</option>
+        </select>
+      </div>
+      <div id="password-container" class="hidden">
+        <label class="block text-gray-700">رمز عبور:</label>
+        <input id="password" type="password" placeholder="رمز خود را وارد کنید" class="mt-1 block w-full border border-gray-300 rounded-lg p-2" />
+      </div>
+      <button id="login-btn" disabled class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium disabled:bg-blue-300">ورود</button>
     </div>
-    <div id="chat-ui" style="display:none;">
-      <div id="last-seen"></div>
-      <div id="chat"></div>
-      <div id="controls"><input type="text" id="msg" placeholder="پیام بنویسید"><button id="send-btn">ارسال</button></div>
-      <button id="clear-btn" style="display:none;">پاک کردن تاریخچه</button>
+    <div id="chat-ui" class="hidden flex-1 flex flex-col">
+      <div id="last-seen" class="text-center text-sm text-gray-500 m-2"></div>
+      <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-400"></div>
+      <div class="flex items-center p-4 border-t border-gray-200">
+        <input id="msg" type="text" placeholder="پیام بنویسید..." class="flex-1 border border-gray-300 rounded-lg p-2 mr-2 focus:outline-none" />
+        <button id="send-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium">ارسال</button>
+      </div>
+      <button id="clear-btn" class="m-4 bg-red-500 text-white py-2 rounded-lg font-medium hidden">پاک کردن تاریخچه</button>
     </div>
   </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded, onChildRemoved, query, limitToLast, remove, set, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA5_iPT-1YjlJgKCsl6wNAIb-jsCTyoSKI",
-      authDomain: "elhh-e2eee.firebaseapp.com",
-      databaseURL: "https://elhh-e2eee-default-rtdb.firebaseio.com",
-      projectId: "elhh-e2eee",
-      storageBucket: "elhh-e2eee.firebasestorage.app",
-      messagingSenderId: "1035622425636",
-      appId: "1:1035622425636:web:09dd18e687490f9e22a4b1",
-      measurementId: "G-2X7EH2QCJE"
-    };
-
+    const firebaseConfig = { /* your config */ };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     let user = null;
 
+    // Elements
     const monthSel = document.getElementById('birth-month');
     const daySel = document.getElementById('birth-day');
+    const passwordDiv = document.getElementById('password-container');
     const passInput = document.getElementById('password');
     const loginBtn = document.getElementById('login-btn');
     const authDiv = document.getElementById('auth');
@@ -70,41 +60,110 @@
     const clearBtn = document.getElementById('clear-btn');
     const lastSeenDiv = document.getElementById('last-seen');
 
-    [{v:10,t:'دی'},{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}].forEach(m=>{ const o=document.createElement('option'); o.value=m.v; o.textContent=m.t; monthSel.append(o); });
-
-    monthSel.addEventListener('change', ()=>{ daySel.innerHTML='<option value="">-- انتخاب روز --</option>'; if(monthSel.value){ daySel.disabled=false; for(let i=1;i<=31;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i; daySel.append(o);} } else daySel.disabled=true; checkPassword(); updateLoginBtn(); });
-    daySel.addEventListener('change', ()=>{ checkPassword(); updateLoginBtn(); });
-    passInput.addEventListener('input', updateLoginBtn);
-
-    function checkPassword(){ passInput.parentElement.style.display=(+monthSel.value===10 && +daySel.value===7)?'block':'none'; }
-    function updateLoginBtn(){ const m=+monthSel.value, d=+daySel.value; const req=(m===10&&d===7); loginBtn.disabled = !(m&&d&&(!req||passInput.value)); }
-
-    loginBtn.addEventListener('click', async ()=>{
-      const m=+monthSel.value, d=+daySel.value;
-      if(m===10&&d===7){ if(passInput.value!=='mohamad200'){ alert('رمز اشتباه'); return;} user='محمد'; }
-      else if(m===10&&d===13) user='الهام'; else { alert('فقط محمد و الهام اجازه دارند'); return; }
-
-      // ذخیره زمان ورود
-      await set(ref(db,'lastSeen/'+user), Date.now());
-
-      authDiv.style.display='none'; chatUi.style.display='flex'; if(user==='محمد') clearBtn.style.display='block';
-
-      // نمایش آخرین بازدید الهام برای محمد
-      if(user==='محمد'){ const snap=await get(ref(db,'lastSeen/الهام')); if(snap.exists()){ const last=new Date(+snap.val()); const mins=Math.floor((Date.now()-last.getTime())/60000); lastSeenDiv.textContent='آخرین بازدید الهام: '+(mins<1?'همین الان':mins+' دقیقه پیش'); }}
-
-      // بارگذاری سریع از cache
-      try{ const cache=JSON.parse(localStorage.getItem('chat-cache')||'{}'); Object.entries(cache).forEach(([k,v])=> appendMessage(k,v)); }catch{}
-
-      const msgsRef = ref(db,'messages');
-      const recentQuery = query(msgsRef, limitToLast(50));
-
-      onChildAdded(recentQuery, snap=>{ const msg=snap.val(), key=snap.key; appendMessage(key,msg); const c=JSON.parse(localStorage.getItem('chat-cache')||'{}'); c[key]=msg; localStorage.setItem('chat-cache', JSON.stringify(c)); });
-      onChildRemoved(msgsRef, snap=>{ const key=snap.key; const el=document.getElementById(key); if(el) el.remove(); const c=JSON.parse(localStorage.getItem('chat-cache')||'{}'); delete c[key]; localStorage.setItem('chat-cache', JSON.stringify(c)); });
+    // Populate months
+    [{v:10,t:'دی'},{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}].forEach(m=>{
+      let o = document.createElement('option'); o.value = m.v; o.textContent = m.t; monthSel.append(o);
     });
 
-    function appendMessage(key,msg){ if(document.getElementById(key)) return; const d=document.createElement('div'); d.id=key; d.className='msg '+(msg.from===user?'from-me':'from-other'); d.textContent=msg.from+': '+msg.text; if(user==='محمد'){ const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=>{ remove(ref(db,'messages/'+key)); }; d.append(btn);} chatDiv.append(d); chatDiv.scrollTop=chatDiv.scrollHeight; }
+    monthSel.addEventListener('change', () => {
+      daySel.innerHTML = '<option value="">-- انتخاب روز --</option>';
+      if (monthSel.value) {
+        daySel.disabled = false;
+        for (let i = 1; i <= 31; i++) {
+          let o = document.createElement('option'); o.value = i; o.textContent = i; daySel.append(o);
+        }
+      } else daySel.disabled = true;
+      togglePassword(); toggleLogin();
+    });
 
-    sendBtn.addEventListener('click', ()=>{ if(!msgInput.value.trim()) return; push(ref(db,'messages'),{from:user,text:msgInput.value}); msgInput.value=''; });
-    clearBtn.addEventListener('click', ()=>{ if(confirm('پاک سازی کل چت؟')){ remove(ref(db,'messages')); localStorage.removeItem('chat-cache'); chatDiv.innerHTML=''; }});
+    daySel.addEventListener('change', () => { togglePassword(); toggleLogin(); });
+    passInput.addEventListener('input', toggleLogin);
+
+    function togglePassword() {
+      passwordDiv.classList.toggle('hidden', !(+monthSel.value === 10 && +daySel.value === 7));
+    }
+    function toggleLogin() {
+      const m = +monthSel.value, d = +daySel.value;
+      const req = (m === 10 && d === 7);
+      loginBtn.disabled = !(m && d && (!req || passInput.value));
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      const m = +monthSel.value, d = +daySel.value;
+      if (m === 10 && d === 7) {
+        if (passInput.value !== 'mohamad200') return alert('رمز اشتباه');
+        user = 'محمد';
+      } else if (m === 10 && d === 13) user = 'الهام';
+      else return alert('دسترسی فقط برای محمد و الهام');
+
+      await set(ref(db, 'lastSeen/' + user), Date.now());
+
+      authDiv.classList.add('hidden');
+      chatUi.classList.remove('hidden');
+      if (user === 'محمد') clearBtn.classList.remove('hidden');
+
+      if (user === 'محمد') {
+        const snap = await get(ref(db, 'lastSeen/الهام'));
+        if (snap.exists()) {
+          const last = new Date(+snap.val());
+          const mins = Math.floor((Date.now() - last.getTime()) / 60000);
+          lastSeenDiv.textContent = 'آخرین بازدید الهام: ' + (mins < 1 ? 'همین الان' : mins + ' دقیقه پیش');
+        }
+      }
+
+      // Load cache
+      try {
+        const cache = JSON.parse(localStorage.getItem('chat-cache') || '{}');
+        Object.entries(cache).forEach(([k, v]) => appendMessage(k, v));
+      } catch {}
+
+      const msgsRef = ref(db, 'messages');
+      const recentQuery = query(msgsRef, limitToLast(50));
+      onChildAdded(recentQuery, snap => {
+        const msg = snap.val(), key = snap.key;
+        appendMessage(key, msg);
+        const c = JSON.parse(localStorage.getItem('chat-cache') || '{}');
+        c[key] = msg;
+        localStorage.setItem('chat-cache', JSON.stringify(c));
+      });
+      onChildRemoved(msgsRef, snap => {
+        const key = snap.key;
+        document.getElementById(key)?.remove();
+        const c = JSON.parse(localStorage.getItem('chat-cache') || '{}');
+        delete c[key]; localStorage.setItem('chat-cache', JSON.stringify(c));
+      });
+    });
+
+    function appendMessage(key, msg) {
+      if (document.getElementById(key)) return;
+      const d = document.createElement('div');
+      d.id = key;
+      d.className = `p-3 rounded-lg max-w-[75%] word-break ${msg.from === user ? 'bg-green-100 self-end text-right' : 'bg-blue-100 self-start text-left'}`;
+      d.textContent = `${msg.from}: ${msg.text}`;
+      if (user === 'محمد') {
+        const btn = document.createElement('button');
+        btn.textContent = '×';
+        btn.className = 'absolute top-1 right-1 text-gray-500 hover:text-red-500';
+        btn.onclick = () => remove(ref(db, 'messages/' + key));
+        d.classList.add('relative');
+        d.append(btn);
+      }
+      chatDiv.append(d);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', () => {
+      if (!msgInput.value.trim()) return;
+      push(ref(db, 'messages'), { from: user, text: msgInput.value });
+      msgInput.value = '';
+    });
+    msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+
+    clearBtn.addEventListener('click', () => {
+      if (!confirm('پاک شدن کامل چت؟')) return;
+      remove(ref(db, 'messages'));
+      localStorage.removeItem('chat-cache');
+      chatDiv.innerHTML = '';
+    });
   </script></body>
 </html>
