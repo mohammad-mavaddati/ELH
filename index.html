@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>چت خصوصی محمد و الهام</title>
+  <title>چت خصوصی</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -106,11 +106,12 @@
     }
     #controls input {
       flex: 1;
-    }  </style>
+    }
+  </style>
 </head>
 <body>
   <div id="container">
-    <header>چت خصوصی محمد و الهام</header>
+    <header>چت خصوصی</header>
     <div id="auth">
       <label for="birth-month">ماه تولد:</label>
       <select id="birth-month">
@@ -138,7 +139,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // پیکربندی Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA5_iPT-1YjlJgKCsl6wNAIb-jsCTyoSKI",
       authDomain: "elhh-e2eee.firebaseapp.com",
@@ -154,14 +154,12 @@
     const db = getDatabase(app);
     let user = null;
 
-    // پر کردن ماه
     const months = [{v:10,t:'دی'} ,{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}];
     const monthSel = document.getElementById('birth-month');
     months.forEach(m=>{
       const opt = document.createElement('option'); opt.value=m.v; opt.textContent=m.t; monthSel.append(opt);
     });
 
-    // فعال‌سازی روز بعد از انتخاب ماه
     monthSel.addEventListener('change', ()=>{
       const daySel = document.getElementById('birth-day');
       daySel.innerHTML='<option value="">-- انتخاب روز --</option>';
@@ -190,7 +188,6 @@
       document.getElementById('login-btn').disabled = !(month && day && passOK);
     }
 
-    // ورود
     document.getElementById('login-btn').addEventListener('click', ()=>{
       const day=+document.getElementById('birth-day').value;
       const month=+monthSel.value;
@@ -205,26 +202,40 @@
       if(user==='محمد') document.getElementById('clear-btn').style.display='block';
 
       const chatRef = ref(db,'messages');
+
+      // Load from localStorage first
+      let cached = localStorage.getItem('chat-cache');
+      if(cached){
+        try {
+          let data = JSON.parse(cached);
+          renderChat(data);
+        } catch(e) { console.error('Local cache error:', e); }
+      }
+
       onValue(chatRef, snap=>{
-        const chat=document.getElementById('chat'); chat.innerHTML='';
         const data=snap.val()||{};
-        Object.entries(data).forEach(([key,msg])=>{
-          const d=document.createElement('div'); d.className='msg '+(msg.from===user?'from-me':'from-other');
-          d.textContent=msg.from+': '+msg.text;
-          if(user==='محمد'){
-            const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=> remove(ref(db,'messages/'+key)); d.append(btn);
-          }
-          chat.append(d);
-        }); chat.scrollTop=chat.scrollHeight;
+        localStorage.setItem('chat-cache', JSON.stringify(data));
+        renderChat(data);
       });
     });
 
-    // ارسال پیام
+    function renderChat(data){
+      const chat=document.getElementById('chat'); chat.innerHTML='';
+      Object.entries(data).forEach(([key,msg])=>{
+        const d=document.createElement('div'); d.className='msg '+(msg.from===user?'from-me':'from-other');
+        d.textContent=msg.from+': '+msg.text;
+        if(user==='محمد'){
+          const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=> remove(ref(db,'messages/'+key)); d.append(btn);
+        }
+        chat.append(d);
+      }); chat.scrollTop=chat.scrollHeight;
+    }
+
     document.getElementById('send-btn').addEventListener('click', ()=>{
       const t=document.getElementById('msg'); if(!t.value.trim()) return;
       push(ref(db,'messages'),{from:user,text:t.value}); t.value='';
     });
-    // پاک‌سازی تاریخچه
+
     document.getElementById('clear-btn').addEventListener('click', ()=>{
       if(confirm('همه پیام‌ها پاک شوند؟')) remove(ref(db,'messages'));
     });
