@@ -1,147 +1,148 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html><html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <title>Simple Chat</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
-    #input, #password, select { width: 80%; padding: 10px; margin-bottom: 10px; }
-    #send, #login, #clearAll { width: 18%; padding: 10px; }
-    .me { color: blue; text-align: right; }
-    .other { color: green; text-align: left; }
-    .message { position: relative; padding-right: 30px; }
-    .deleteBtn { position: absolute; right: 0; top: 0; cursor: pointer; color: red; }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت آنلاین</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; margin: 0; padding: 0; }
+        #login, #chat { max-width: 500px; margin: 50px auto; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; }
+        .message { margin-bottom: 10px; padding: 5px; border-radius: 5px; background: #f1f1f1; position: relative; }
+        .message .sender { font-weight: bold; margin-bottom: 3px; }
+        .message button.delete { position: absolute; left: 5px; top: 5px; background: transparent; border: none; cursor: pointer; }
+        #controls { margin-top: 10px; display: flex; gap: 10px; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; }
+        button#send { background-color: #28a745; color: white; }
+        button#clear { background-color: #dc3545; color: white; }
+    </style>
 </head>
 <body>
-  <h2>Chat with your friend</h2>  <div id="loginArea">
-    <label>ماه تولد:</label><br>
-    <select id="month">
-      <option value="">انتخاب ماه</option>
-      <option value="دی">دی</option>
-      <option value="بهمن">بهمن</option>
-    </select><br>
-    <label>روز تولد:</label><br>
-    <select id="day">
-      <option value="">انتخاب روز</option>
-    </select><br>
-    <input type="password" id="password" placeholder="رمز (فقط برای محمد)" style="display:none;">
-    <button id="login">ورود</button>
-  </div>  <div id="chatArea" style="display:none;">
+    <div id="login">
+        <h3>ورود به چت</h3>
+        <label>ماه تولد:</label>
+        <select id="month">
+            <option value="1">فروردین</option>
+            <option value="2">اردیبهشت</option>
+            <option value="3">خرداد</option>
+            <option value="4">تیر</option>
+            <option value="5">مرداد</option>
+            <option value="6">شهریور</option>
+            <option value="7">مهر</option>
+            <option value="8">آبان</option>
+            <option value="9">آذر</option>
+            <option value="10">دی</option>
+            <option value="11">بهمن</option>
+            <option value="12">اسفند</option>
+        </select>
+        <label>روز تولد:</label>
+        <select id="day"></select>
+        <div id="password-container" style="display:none;">
+            <label>رمز:</label>
+            <input type="password" id="password" />
+        </div>
+        <button id="loginBtn">ورود</button>
+    </div><div id="chat" style="display:none;">
+    <h3>چت آنلاین</h3>
     <div id="messages"></div>
-    <input type="text" id="input" placeholder="Type a message...">
-    <button id="send">Send</button>
-    <button id="clearAll" style="display:none;">پاک کردن تاریخچه</button>
-  </div>  <script>
+    <div id="controls">
+        <input type="text" id="msgInput" placeholder="پیام خود را بنویسید..." style="flex:1; padding:8px;" />
+        <button id="send">ارسال</button>
+    </div>
+    <button id="clear" style="display:none; margin-top:10px;">حذف تاریخچه</button>
+</div>
+
+<script type="module">
+    // Import Firebase functions
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+
+    // Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyDA5KmnIZ9CyIZ0e50sRg0kMk8euVk-xuo",
-      authDomain: "chat-74b30.firebaseapp.com",
-      databaseURL: "https://chat-74b30-default-rtdb.firebaseio.com",
-      projectId: "chat-74b30",
-      storageBucket: "chat-74b30.firebasestorage.app",
-      messagingSenderId: "430164893456",
-      appId: "1:430164893456:web:ec663ab64622ead831cf95",
-      measurementId: "G-3KVPERWH78"
+        apiKey: "AIzaSyCZwJpIq3E4pvYmrHixi5ZSCJPbYPjXRt8",
+        authDomain: "elha-4d00a.firebaseapp.com",
+        databaseURL: "https://elha-4d00a-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "elha-4d00a",
+        storageBucket: "elha-4d00a.firebasestorage.app",
+        messagingSenderId: "464090098680",
+        appId: "1:464090098680:web:ceec4cf10f08c7fe2f040d",
+        measurementId: "G-78Q4CHE5TE"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const messagesRef = db.ref("messages");
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
 
-    const messagesDiv = document.getElementById("messages");
-    const input = document.getElementById("input");
-    const send = document.getElementById("send");
-    const password = document.getElementById("password");
-    const login = document.getElementById("login");
-    const loginArea = document.getElementById("loginArea");
-    const chatArea = document.getElementById("chatArea");
-    const month = document.getElementById("month");
-    const day = document.getElementById("day");
-    const clearAll = document.getElementById("clearAll");
+    // Populate day select
+    const month = document.getElementById('month');
+    const day = document.getElementById('day');
+    for (let i = 1; i <= 31; i++) {
+        const opt = document.createElement('option'); opt.value = i; opt.textContent = i;
+        day.appendChild(opt);
+    }
 
-    let username = "";
+    const passwordContainer = document.getElementById('password-container');
+    let currentUser = null;
 
-    month.onchange = () => {
-      const selectedMonth = month.value;
-      const dayOptions = day;
-      dayOptions.innerHTML = '<option value="">انتخاب روز</option>';
-      let maxDay = 31;
-      if (selectedMonth === "بهمن") maxDay = 30;
-      for (let i = 1; i <= maxDay; i++) {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = i;
-        dayOptions.appendChild(option);
-      }
-    };
+    month.addEventListener('change', checkUser);
+    day.addEventListener('change', checkUser);
 
-    day.onchange = () => {
-      if (month.value === "دی" && day.value === "7") {
-        password.style.display = "block";
-      } else {
-        password.style.display = "none";
-      }
-    };
+    function checkUser() {
+        const m = parseInt(month.value);
+        const d = parseInt(day.value);
+        if (m === 10 && d === 7) { currentUser = 'Mohammad'; passwordContainer.style.display = 'block'; }
+        else if (m === 10 && d === 13) { currentUser = 'Elham'; passwordContainer.style.display = 'none'; }
+        else { currentUser = null; passwordContainer.style.display = 'none'; }
+    }
 
-    login.onclick = () => {
-      const selectedDay = parseInt(day.value);
-      const selectedMonth = month.value;
-
-      if (selectedMonth === "دی" && selectedDay === 7) {
-        if (password.value !== "mohamad200") {
-          alert("رمز اشتباه است.");
-          return;
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        if (!currentUser) { alert('تاریخ تولد معتبر نیست.'); return; }
+        if (currentUser === 'Mohammad') {
+            const pw = document.getElementById('password').value;
+            if (pw !== 'mohamad200') { alert('رمز نادرست'); return; }
         }
-        username = "محمد";
-        clearAll.style.display = "inline-block";
-      } else if (selectedMonth === "دی" && selectedDay === 13) {
-        username = "الهام";
-      } else {
-        alert("تاریخ تولد نادرست است.");
-        return;
-      }
-
-      loginArea.style.display = "none";
-      chatArea.style.display = "block";
-    };
-
-    send.onclick = () => {
-      const text = input.value.trim();
-      if (text) {
-        const newMsg = messagesRef.push();
-        newMsg.set({ user: username, text, id: newMsg.key });
-        input.value = "";
-      }
-    };
-
-    clearAll.onclick = () => {
-      if (confirm("آیا مطمئن هستید که می‌خواهید همه پیام‌ها را پاک کنید؟")) {
-        messagesRef.remove();
-        messagesDiv.innerHTML = "";
-      }
-    };
-
-    messagesRef.on("child_added", snapshot => {
-      const msg = snapshot.val();
-      const div = document.createElement("div");
-      div.className = (msg.user === username) ? "me message" : "other message";
-      div.textContent = msg.user + ": " + msg.text;
-
-      if (username === "محمد" && msg.user === username) {
-        const del = document.createElement("span");
-        del.textContent = " ✖";
-        del.className = "deleteBtn";
-        del.onclick = () => {
-          messagesRef.child(msg.id).remove();
-          div.remove();
-        };
-        div.appendChild(del);
-      }
-
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('chat').style.display = 'block';
+        if (currentUser === 'Mohammad') document.getElementById('clear').style.display = 'block';
+        listenMessages();
     });
-  </script></body>
+
+    function listenMessages() {
+        const msgsRef = ref(db, 'messages');
+        onValue(msgsRef, snapshot => {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            const data = snapshot.val(); if (!data) return;
+            Object.keys(data).forEach(key => {
+                const m = data[key];
+                const div = document.createElement('div'); div.className = 'message';
+                div.innerHTML = `<div class='sender'>${m.sender}</div><div class='text'>${m.text}</div>`;
+                if (currentUser === 'Mohammad') {
+                    const btn = document.createElement('button'); btn.textContent = '❌'; btn.className = 'delete';
+                    btn.onclick = () => remove(ref(db, `messages/${key}`));
+                    div.appendChild(btn);
+                }
+                messagesDiv.appendChild(div);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    }
+
+    document.getElementById('send').addEventListener('click', () => {
+        const text = document.getElementById('msgInput').value.trim(); if (!text) return;
+        const msgsRef = ref(db, 'messages');
+        const newRef = push(msgsRef);
+        set(newRef, { sender: currentUser, text });
+        document.getElementById('msgInput').value = '';
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+        if (confirm('آیا مطمئنید که تمام تاریخچه حذف شود؟')) {
+            remove(ref(db, 'messages'));
+        }
+    });
+</script>
+
+</body>
 </html>
