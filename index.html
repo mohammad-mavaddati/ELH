@@ -19,7 +19,7 @@
     .del-btn { position: absolute; top: 4px; font-size: 0.75rem; background: transparent; border: none; color: #888; cursor: pointer; right: 4px; }
     #controls { display: flex; gap: 10px; }
     #controls input { flex: 1; }
-    #last-seen { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
+    #last-seen { font-size: 0.8rem; color: #666; margin-bottom: 8px; text-align: center; }
   </style>
 </head>
 <body>
@@ -41,7 +41,7 @@
     </div>
   </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded, query, limitToLast, remove, set, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, onChildRemoved, query, limitToLast, remove, set, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA5_iPT-1YjlJgKCsl6wNAIb-jsCTyoSKI",
@@ -70,16 +70,9 @@
     const clearBtn = document.getElementById('clear-btn');
     const lastSeenDiv = document.getElementById('last-seen');
 
-    [{v:10,t:'دی'},{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}].forEach(m=>{
-      const o=document.createElement('option'); o.value=m.v; o.textContent=m.t; monthSel.append(o);
-    });
+    [{v:10,t:'دی'},{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}].forEach(m=>{ const o=document.createElement('option'); o.value=m.v; o.textContent=m.t; monthSel.append(o); });
 
-    monthSel.addEventListener('change', ()=>{
-      daySel.innerHTML='<option value="">-- انتخاب روز --</option>';
-      if(monthSel.value){ daySel.disabled=false; for(let i=1;i<=31;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i; daySel.append(o);} }
-      else daySel.disabled=true;
-      checkPassword(); updateLoginBtn();
-    });
+    monthSel.addEventListener('change', ()=>{ daySel.innerHTML='<option value="">-- انتخاب روز --</option>'; if(monthSel.value){ daySel.disabled=false; for(let i=1;i<=31;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i; daySel.append(o);} } else daySel.disabled=true; checkPassword(); updateLoginBtn(); });
     daySel.addEventListener('change', ()=>{ checkPassword(); updateLoginBtn(); });
     passInput.addEventListener('input', updateLoginBtn);
 
@@ -91,37 +84,27 @@
       if(m===10&&d===7){ if(passInput.value!=='mohamad200'){ alert('رمز اشتباه'); return;} user='محمد'; }
       else if(m===10&&d===13) user='الهام'; else { alert('فقط محمد و الهام اجازه دارند'); return; }
 
-      // ثبت زمان ورود در دیتابیس
-      await set(ref(db, 'lastSeen/'+user), Date.now());
+      // ذخیره زمان ورود
+      await set(ref(db,'lastSeen/'+user), Date.now());
 
       authDiv.style.display='none'; chatUi.style.display='flex'; if(user==='محمد') clearBtn.style.display='block';
 
-      if(user==='محمد') {
-        const snap = await get(ref(db, 'lastSeen/الهام'));
-        if(snap.exists()) {
-          const last = new Date(+snap.val());
-          const mins = Math.floor((Date.now() - last.getTime()) / 60000);
-          lastSeenDiv.textContent = 'آخرین بازدید الهام: ' + (mins < 1 ? 'همین الان' : mins + ' دقیقه پیش');
-        }
-      }
+      // نمایش آخرین بازدید الهام برای محمد
+      if(user==='محمد'){ const snap=await get(ref(db,'lastSeen/الهام')); if(snap.exists()){ const last=new Date(+snap.val()); const mins=Math.floor((Date.now()-last.getTime())/60000); lastSeenDiv.textContent='آخرین بازدید الهام: '+(mins<1?'همین الان':mins+' دقیقه پیش'); }}
 
-      try{ const cache=JSON.parse(localStorage.getItem('chat-cache')||'{}'); Object.entries(cache).forEach(([k,v])=> appendMessage(k,v)); } catch{};
+      // بارگذاری سریع از cache
+      try{ const cache=JSON.parse(localStorage.getItem('chat-cache')||'{}'); Object.entries(cache).forEach(([k,v])=> appendMessage(k,v)); }catch{}
 
       const msgsRef = ref(db,'messages');
       const recentQuery = query(msgsRef, limitToLast(50));
-      onChildAdded(recentQuery, snap=>{
-        const msg=snap.val(), key=snap.key;
-        appendMessage(key,msg);
-        const curCache = JSON.parse(localStorage.getItem('chat-cache')||'{}'); curCache[key]=msg;
-        localStorage.setItem('chat-cache', JSON.stringify(curCache));
-      });
+
+      onChildAdded(recentQuery, snap=>{ const msg=snap.val(), key=snap.key; appendMessage(key,msg); const c=JSON.parse(localStorage.getItem('chat-cache')||'{}'); c[key]=msg; localStorage.setItem('chat-cache', JSON.stringify(c)); });
+      onChildRemoved(msgsRef, snap=>{ const key=snap.key; const el=document.getElementById(key); if(el) el.remove(); const c=JSON.parse(localStorage.getItem('chat-cache')||'{}'); delete c[key]; localStorage.setItem('chat-cache', JSON.stringify(c)); });
     });
 
-    function appendMessage(key,msg){ if(document.getElementById(key)) return; const d=document.createElement('div'); d.id=key; d.className='msg '+(msg.from===user?'from-me':'from-other'); d.textContent=msg.from+': '+msg.text;
-      if(user==='محمد'){ const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=>{ remove(ref(db,'messages/'+key)); deleteCache(key);} ; d.append(btn);} chatDiv.append(d); chatDiv.scrollTop=chatDiv.scrollHeight; }
-    function deleteCache(key){ const c=JSON.parse(localStorage.getItem('chat-cache')||'{}'); delete c[key]; localStorage.setItem('chat-cache', JSON.stringify(c)); }
+    function appendMessage(key,msg){ if(document.getElementById(key)) return; const d=document.createElement('div'); d.id=key; d.className='msg '+(msg.from===user?'from-me':'from-other'); d.textContent=msg.from+': '+msg.text; if(user==='محمد'){ const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=>{ remove(ref(db,'messages/'+key)); }; d.append(btn);} chatDiv.append(d); chatDiv.scrollTop=chatDiv.scrollHeight; }
 
     sendBtn.addEventListener('click', ()=>{ if(!msgInput.value.trim()) return; push(ref(db,'messages'),{from:user,text:msgInput.value}); msgInput.value=''; });
-    clearBtn.addEventListener('click', ()=>{ if(confirm('پاک شود؟')){ remove(ref(db,'messages')); localStorage.removeItem('chat-cache'); chatDiv.innerHTML=''; }});
+    clearBtn.addEventListener('click', ()=>{ if(confirm('پاک سازی کل چت؟')){ remove(ref(db,'messages')); localStorage.removeItem('chat-cache'); chatDiv.innerHTML=''; }});
   </script></body>
 </html>
