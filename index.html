@@ -1,62 +1,144 @@
-<!DOCTYPE html>
-<html lang="fa">
+<!DOCTYPE html><html lang="fa">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>چت خصوصی محمد و الهام</title>
   <style>
-    body { font-family: sans-serif; direction: rtl; background: #f0f0f0; padding: 20px; max-width: 600px; margin: auto; }
-    #chat { background: white; padding: 10px; border-radius: 10px; max-height: 400px; overflow-y: auto; margin-bottom: 10px; }
-    .msg { margin: 5px 0; padding: 5px 10px; border-radius: 10px; }
-    .from-me { background: #d0ffd0; text-align: right; }
-    .from-other { background: #d0d0ff; text-align: left; }
-    #controls { display: flex; gap: 10px; }
-    button { cursor: pointer; }
-  </style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #container {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #4a90e2;
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+      font-size: 1.2rem;
+    }
+    #auth, #chat-ui {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    select, input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:disabled {
+      background: #a0c4e8;
+      cursor: not-allowed;
+    }
+    #chat {
+      flex: 1;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .msg {
+      margin: 8px 0;
+      padding: 8px 12px;
+      border-radius: 12px;
+      max-width: 80%;
+      word-wrap: break-word;
+      position: relative;
+    }
+    .from-me {
+      background: #e1ffc7;
+      margin-left: auto;
+    }
+    .from-other {
+      background: #d0e7ff;
+      margin-right: auto;
+    }
+    .del-btn {
+      position: absolute;
+      top: 4px;
+      font-size: 0.75rem;
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+    }
+    .from-me .del-btn, .from-other .del-btn { right: 4px; }
+    #controls {
+      display: flex;
+      gap: 10px;
+    }
+    #controls input {
+      flex: 1;
+    }  </style>
 </head>
 <body>
-  <h2>ورود به چت</h2>
-  <div id="auth">
-    <label>ماه تولد:
+  <div id="container">
+    <header>چت خصوصی محمد و الهام</header>
+    <div id="auth">
+      <label for="birth-month">ماه تولد:</label>
       <select id="birth-month">
         <option value="">-- انتخاب ماه --</option>
-        <option value="10">دی</option>
-        <option value="1">فروردین</option>
-        <option value="2">اردیبهشت</option>
       </select>
-    </label>
-    <label>روز تولد:
-      <select id="birth-day">
+      <label for="birth-day">روز تولد:</label>
+      <select id="birth-day" disabled>
         <option value="">-- انتخاب روز --</option>
-        <script>
-          for (let i = 1; i <= 31; i++) {
-            document.write(`<option value="${i}">${i}</option>`);
-          }
-        </script>
       </select>
-    </label>
-    <div id="password-container" style="display:none">
-      <label>رمز عبور:
-        <input type="password" id="password">
-      </label>
-    </div>
-    <button onclick="login()">ورود</button>
+      <div id="password-container" style="display:none; margin-top:10px;">
+        <label for="password">رمز عبور:</label>
+        <input type="password" id="password" placeholder="رمز خود را وارد کنید">
+      </div>
+      <button id="login-btn" disabled>ورود</button>
+    </div><div id="chat-ui" style="display:none;">
+  <div id="chat"></div>
+  <div id="controls">
+    <input type="text" id="msg" placeholder="پیام بنویسید">
+    <button id="send-btn">ارسال</button>
   </div>
+  <button id="clear-btn" style="display:none;">پاک کردن تاریخچه</button>
+</div>
 
-  <div id="chat-ui" style="display:none">
-    <div id="chat"></div>
-    <div id="controls">
-      <input type="text" id="msg" placeholder="پیام بنویسید">
-      <button onclick="sendMessage()">ارسال</button>
-    </div>
-    <div id="admin-controls" style="display:none">
-      <button onclick="clearHistory()">پاک کردن تاریخچه</button>
-    </div>
-  </div>
-
-  <script type="module">
+  </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
+    // پیکربندی Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA5_iPT-1YjlJgKCsl6wNAIb-jsCTyoSKI",
       authDomain: "elhh-e2eee.firebaseapp.com",
@@ -70,71 +152,81 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
     let user = null;
 
-    window.login = function () {
-      const day = parseInt(document.getElementById('birth-day').value);
-      const month = parseInt(document.getElementById('birth-month').value);
+    // پر کردن ماه
+    const months = [{v:10,t:'دی'} ,{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}];
+    const monthSel = document.getElementById('birth-month');
+    months.forEach(m=>{
+      const opt = document.createElement('option'); opt.value=m.v; opt.textContent=m.t; monthSel.append(opt);
+    });
 
-      if (month === 10 && day === 7) {
-        user = 'محمد';
-        document.getElementById('password-container').style.display = 'block';
-        const pass = document.getElementById('password').value;
-        if (pass !== 'mohamad200') {
-          alert('رمز اشتباه است');
-          return;
+    // فعال‌سازی روز بعد از انتخاب ماه
+    monthSel.addEventListener('change', ()=>{
+      const daySel = document.getElementById('birth-day');
+      daySel.innerHTML='<option value="">-- انتخاب روز --</option>';
+      if(monthSel.value){
+        daySel.disabled=false;
+        for(let i=1;i<=31;i++){
+          const o=document.createElement('option'); o.value=i; o.textContent=i; daySel.append(o);
         }
-      } else if (month === 10 && day === 13) {
-        user = 'الهام';
-      } else {
-        alert('فقط محمد و الهام اجازه ورود دارند.');
-        return;
-      }
+      } else daySel.disabled=true;
+      checkShowPassword(); setLoginEnabled();
+    });
 
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('chat-ui').style.display = 'block';
-      if (user === 'محمد') document.getElementById('admin-controls').style.display = 'block';
+    document.getElementById('birth-day').addEventListener('change', ()=>{ checkShowPassword(); setLoginEnabled(); });
+    document.getElementById('password').addEventListener('input', ()=> setLoginEnabled());
 
-      const chat = document.getElementById('chat');
-      const messagesRef = ref(db, 'messages');
-      onValue(messagesRef, (snapshot) => {
-        chat.innerHTML = '';
-        const msgs = snapshot.val();
-        for (let key in msgs) {
-          const msg = msgs[key];
-          const div = document.createElement('div');
-          div.className = 'msg ' + (msg.from === user ? 'from-me' : 'from-other');
-          div.textContent = msg.from + ': ' + msg.text;
+    function checkShowPassword(){
+      const day=+document.getElementById('birth-day').value;
+      const month=+monthSel.value;
+      document.getElementById('password-container').style.display = (month===10 && day===7)? 'block':'none';
+    }
+    function setLoginEnabled(){
+      const day=+document.getElementById('birth-day').value;
+      const month=+monthSel.value;
+      const passReq=(month===10 && day===7);
+      const passOK = passReq? document.getElementById('password').value.length>0 : true;
+      document.getElementById('login-btn').disabled = !(month && day && passOK);
+    }
 
-          if (user === 'محمد') {
-            const del = document.createElement('button');
-            del.textContent = 'حذف';
-            del.style.marginRight = '10px';
-            del.onclick = () => remove(ref(db, 'messages/' + key));
-            div.appendChild(del);
+    // ورود
+    document.getElementById('login-btn').addEventListener('click', ()=>{
+      const day=+document.getElementById('birth-day').value;
+      const month=+monthSel.value;
+      if(month===10 && day===7){
+        if(document.getElementById('password').value!=='mohamad200'){ alert('رمز اشتباه'); return; }
+        user='محمد';
+      } else if(month===10 && day===13) user='الهام';
+      else { alert('فقط محمد و الهام اجازه ورود دارند.'); return; }
+
+      document.getElementById('auth').style.display='none';
+      document.getElementById('chat-ui').style.display='flex';
+      if(user==='محمد') document.getElementById('clear-btn').style.display='block';
+
+      const chatRef = ref(db,'messages');
+      onValue(chatRef, snap=>{
+        const chat=document.getElementById('chat'); chat.innerHTML='';
+        const data=snap.val()||{};
+        Object.entries(data).forEach(([key,msg])=>{
+          const d=document.createElement('div'); d.className='msg '+(msg.from===user?'from-me':'from-other');
+          d.textContent=msg.from+': '+msg.text;
+          if(user==='محمد'){
+            const btn=document.createElement('button'); btn.textContent='×'; btn.className='del-btn'; btn.onclick=()=> remove(ref(db,'messages/'+key)); d.append(btn);
           }
-
-          chat.appendChild(div);
-        }
-        chat.scrollTop = chat.scrollHeight;
+          chat.append(d);
+        }); chat.scrollTop=chat.scrollHeight;
       });
-    };
+    });
 
-    window.sendMessage = function () {
-      const input = document.getElementById('msg');
-      const text = input.value.trim();
-      if (text) {
-        push(ref(db, 'messages'), { from: user, text });
-        input.value = '';
-      }
-    };
-
-    window.clearHistory = function () {
-      if (confirm('همه پیام‌ها پاک شوند؟')) {
-        remove(ref(db, 'messages'));
-      }
-    };
-  </script>
-</body>
+    // ارسال پیام
+    document.getElementById('send-btn').addEventListener('click', ()=>{
+      const t=document.getElementById('msg'); if(!t.value.trim()) return;
+      push(ref(db,'messages'),{from:user,text:t.value}); t.value='';
+    });
+    // پاک‌سازی تاریخچه
+    document.getElementById('clear-btn').addEventListener('click', ()=>{
+      if(confirm('همه پیام‌ها پاک شوند؟')) remove(ref(db,'messages'));
+    });
+  </script></body>
 </html>
