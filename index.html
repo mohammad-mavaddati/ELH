@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>چت خصوصی</title>
+  <title>چت خصوصی محمد و الهام</title>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; background-color: #f5f7fa; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
     #container { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: flex; flex-direction: column; }
@@ -19,11 +19,12 @@
     .del-btn { position: absolute; top: 4px; font-size: 0.75rem; background: transparent; border: none; color: #888; cursor: pointer; right: 4px; }
     #controls { display: flex; gap: 10px; }
     #controls input { flex: 1; }
+    #last-seen { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div id="container">
-    <header>چت خصوصی</header>
+    <header>چت خصوصی محمد و الهام</header>
     <div id="auth">
       <label for="birth-month">ماه تولد:</label>
       <select id="birth-month"><option value="">-- انتخاب ماه --</option></select>
@@ -33,13 +34,14 @@
       <button id="login-btn" disabled>ورود</button>
     </div>
     <div id="chat-ui" style="display:none;">
+      <div id="last-seen"></div>
       <div id="chat"></div>
       <div id="controls"><input type="text" id="msg" placeholder="پیام بنویسید"><button id="send-btn">ارسال</button></div>
       <button id="clear-btn" style="display:none;">پاک کردن تاریخچه</button>
     </div>
   </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded, query, limitToLast, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, query, limitToLast, remove, set, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA5_iPT-1YjlJgKCsl6wNAIb-jsCTyoSKI",
@@ -56,7 +58,6 @@
     const db = getDatabase(app);
     let user = null;
 
-    // UI elements
     const monthSel = document.getElementById('birth-month');
     const daySel = document.getElementById('birth-day');
     const passInput = document.getElementById('password');
@@ -67,8 +68,8 @@
     const sendBtn = document.getElementById('send-btn');
     const msgInput = document.getElementById('msg');
     const clearBtn = document.getElementById('clear-btn');
+    const lastSeenDiv = document.getElementById('last-seen');
 
-    // init months
     [{v:10,t:'دی'},{v:1,t:'فروردین'},{v:2,t:'اردیبهشت'}].forEach(m=>{
       const o=document.createElement('option'); o.value=m.v; o.textContent=m.t; monthSel.append(o);
     });
@@ -85,24 +86,32 @@
     function checkPassword(){ passInput.parentElement.style.display=(+monthSel.value===10 && +daySel.value===7)?'block':'none'; }
     function updateLoginBtn(){ const m=+monthSel.value, d=+daySel.value; const req=(m===10&&d===7); loginBtn.disabled = !(m&&d&&(!req||passInput.value)); }
 
-    loginBtn.addEventListener('click', ()=>{
+    loginBtn.addEventListener('click', async ()=>{
       const m=+monthSel.value, d=+daySel.value;
       if(m===10&&d===7){ if(passInput.value!=='mohamad200'){ alert('رمز اشتباه'); return;} user='محمد'; }
       else if(m===10&&d===13) user='الهام'; else { alert('فقط محمد و الهام اجازه دارند'); return; }
 
+      // ثبت زمان ورود در دیتابیس
+      await set(ref(db, 'lastSeen/'+user), Date.now());
+
       authDiv.style.display='none'; chatUi.style.display='flex'; if(user==='محمد') clearBtn.style.display='block';
 
-      // load local cache
-      try{ const cache=JSON.parse(localStorage.getItem('chat-cache')||'{}'); Object.entries(cache).forEach(([k,v])=> appendMessage(k,v)); }
-      catch{};
+      if(user==='محمد') {
+        const snap = await get(ref(db, 'lastSeen/الهام'));
+        if(snap.exists()) {
+          const last = new Date(+snap.val());
+          const mins = Math.floor((Date.now() - last.getTime()) / 60000);
+          lastSeenDiv.textContent = 'آخرین بازدید الهام: ' + (mins < 1 ? 'همین الان' : mins + ' دقیقه پیش');
+        }
+      }
 
-      // real-time with incremental child added and limit
+      try{ const cache=JSON.parse(localStorage.getItem('chat-cache')||'{}'); Object.entries(cache).forEach(([k,v])=> appendMessage(k,v)); } catch{};
+
       const msgsRef = ref(db,'messages');
       const recentQuery = query(msgsRef, limitToLast(50));
       onChildAdded(recentQuery, snap=>{
         const msg=snap.val(), key=snap.key;
         appendMessage(key,msg);
-        // update cache
         const curCache = JSON.parse(localStorage.getItem('chat-cache')||'{}'); curCache[key]=msg;
         localStorage.setItem('chat-cache', JSON.stringify(curCache));
       });
