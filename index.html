@@ -71,8 +71,14 @@
     };
     // ----------------------------------
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
+
+    // Force long-polling instead of WebSocket:
+    const db = getDatabase(app, {
+      experimentalForceLongPolling: true
+    });
+
     let user = null;
 
     // Elements
