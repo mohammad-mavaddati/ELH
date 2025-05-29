@@ -9,6 +9,11 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen p-4">
   <div id="container" class="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
+    <!-- وضعیت اتصال و دکمه رفرش -->
+    <div id="connection-status" class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
+      <span id="status-text" class="text-sm">در حال بررسی اتصال...</span>
+      <button id="refresh-btn" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">رفرش</button>
+    </div>
     <div class="bg-blue-600 text-white text-center py-4 text-xl font-semibold">
       چت خصوصی محمد و الهام
     </div>
@@ -75,7 +80,82 @@
     const db  = getDatabase(app);
     let user = null;
 
-    // Elements
+    // --- اتصال سریع و وضعیت فیلترشکن ---
+    const statusText = document.getElementById('status-text');
+    const refreshBtn = document.getElementById('refresh-btn');
+
+    let lastStatus = null; // true=connect, false=قطع, null=نامشخص
+    let connectingToVPN = false;
+    let failCount = 0;
+
+    function updateStatus(state) {
+      if (state === "connect") {
+        statusText.textContent = "connect";
+        statusText.className = "text-sm text-green-600 font-bold";
+      } else if (state === "connecting") {
+        statusText.textContent = "در حال اتصال به فیلترشکن...";
+        statusText.className = "text-sm text-orange-500 font-bold";
+      } else {
+        statusText.textContent = "نیازمند به فیلترشکن";
+        statusText.className = "text-sm text-red-500 font-bold";
+      }
+    }
+
+    async function fastCheckConnection(timeoutMs = 1500) {
+      let timer;
+      let timedOut = false;
+
+      const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          reject(new Error("timeout"));
+        }, timeoutMs);
+      });
+
+      try {
+        await Promise.race([
+          get(ref(db, 'test-connection')),
+          timeoutPromise
+        ]);
+        clearTimeout(timer);
+        return true;
+      } catch (e) {
+        if (!timedOut) clearTimeout(timer);
+        return false;
+      }
+    }
+
+    // سرعت چک: هر ۵۰۰ میلی‌ثانیه
+    setInterval(async () => {
+      const connected = await fastCheckConnection(1500);
+
+      if (connected) {
+        if (lastStatus !== true) {
+          updateStatus("connect");
+          lastStatus = true;
+          failCount = 0;
+          connectingToVPN = false;
+        }
+      } else {
+        if (lastStatus === true || lastStatus === null) {
+          connectingToVPN = true;
+          failCount = 1;
+          updateStatus("connecting");
+          lastStatus = false;
+        } else if (connectingToVPN && failCount < 1) {
+          failCount++;
+          updateStatus("connecting");
+        } else {
+          updateStatus("disconnected");
+          connectingToVPN = false;
+          lastStatus = false;
+        }
+      }
+    }, 500);
+
+    refreshBtn.onclick = () => location.reload();
+
+    // --- بقیه کد احراز هویت و چت ---
     const monthSel      = document.getElementById('birth-month');
     const daySel        = document.getElementById('birth-day');
     const passwordDiv   = document.getElementById('password-container');
